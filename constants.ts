@@ -1,6 +1,9 @@
 import { Category, Product } from './types';
 
-export const API_ENDPOINT = 'https://api.npoint.io/a59a117373f76023537b';
+// Using keyvalue.xyz for a simple, anonymous, writable JSON store.
+// NOTE: This is a public endpoint. Anyone with the URL can read/write data.
+// Data was pre-initialized with MOCK_PRODUCTS.
+export const API_ENDPOINT = 'https://api.keyvalue.xyz/244a03c0/baby_store_products';
 
 export const CATEGORIES: Category[] = [
   { 
