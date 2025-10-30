@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Product } from '../types';
 
@@ -10,8 +9,10 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, onViewProduct }) => {
   const isSoldOut = product.quantity === 0;
   
-  // Ensure imageUrls is an array
-  const imageUrlsArray = typeof product.imageUrls === 'string' ? JSON.parse(product.imageUrls) : product.imageUrls;
+  // Ensure imageUrls is an array and provide a fallback
+  const imageUrlsArray = (typeof product.imageUrls === 'string' ? JSON.parse(product.imageUrls) : product.imageUrls) || [];
+  const displayImage = imageUrlsArray.length > 0 ? imageUrlsArray[0] : 'https://placehold.co/600x600/D6E6F2/4C5F7A?text=Sin+Imagen';
+
 
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 hover:shadow-xl flex flex-col relative ${isSoldOut ? 'opacity-70' : ''}`}>
@@ -21,7 +22,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onViewProduct }) => 
          </div>
       )}
       <div className="h-56 w-full overflow-hidden">
-        <img src={imageUrlsArray[0]} alt={product.name} className={`w-full h-full object-cover ${isSoldOut ? 'filter grayscale' : ''}`} />
+        <img src={displayImage} alt={product.name} className={`w-full h-full object-cover ${isSoldOut ? 'filter grayscale' : ''}`} />
       </div>
       <div className="p-4 flex flex-col flex-grow">
         <h3 className="text-lg font-semibold text-brand-blue truncate">{product.name}</h3>
