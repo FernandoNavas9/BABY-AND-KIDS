@@ -5,64 +5,26 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
 import { Product } from './types';
-import { API_ENDPOINT, MOCK_PRODUCTS } from './constants';
+import { MOCK_PRODUCTS } from './constants';
+import { seed, sql } from './lib/db';
 
 const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const updateProductsOnServer = async (updatedProducts: Product[]) => {
-    try {
-      const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedProducts),
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to update products: ${await response.text()}`);
-      }
-      return true;
-    } catch (error) {
-      console.error("Error updating products on server:", error);
-      alert('Hubo un error al guardar los cambios. Por favor, inténtelo de nuevo.');
-      return false;
-    }
-  };
-
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(API_ENDPOINT);
-        
-        if (!response.ok) {
-           // If the endpoint doesn't exist or there's a server error, initialize with mock data.
-          console.warn('Failed to fetch products, initializing with mock data.');
-          setProducts(MOCK_PRODUCTS);
-          await updateProductsOnServer(MOCK_PRODUCTS); // Seed the database
-          return;
-        }
-
-        const data = await response.json();
-        
-        // keyvalue.xyz can return `false` for an empty key. Check if data is a valid array.
-        if (Array.isArray(data) && data.length > 0) {
-          setProducts(data);
-        } else {
-          // If data is not an array or is empty, it's an uninitialized or corrupt store.
-          console.warn('API returned no products or invalid data. Initializing with mock data.');
-          setProducts(MOCK_PRODUCTS);
-          await updateProductsOnServer(MOCK_PRODUCTS); // Seed the database
-        }
-
+        // Seed the database if it's the first run
+        await seed();
+        const { rows } = await sql<Product>`SELECT * FROM products ORDER BY id ASC;`;
+        setProducts(rows);
       } catch (error) {
-        // Catch JSON parsing errors or other network issues.
-        console.error("Error fetching products, initializing with mock data:", error);
+        console.error("Error fetching products from database:", error);
+        // Fallback to mock products if DB fails, though unlikely with Vercel Postgres
         setProducts(MOCK_PRODUCTS);
-        await updateProductsOnServer(MOCK_PRODUCTS);
       } finally {
         setIsLoading(false);
       }
@@ -71,35 +33,59 @@ const App: React.FC = () => {
     fetchProducts();
   }, []);
 
-  const handleAddProduct = async (newProduct: Omit<Product, 'id'>): Promise<boolean> => {
-    const newProductsList = [
-      ...products,
-      {
-        ...newProduct,
-        id: products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1,
-      },
-    ];
-    const success = await updateProductsOnServer(newProductsList);
-    if (success) {
-      setProducts(newProductsList);
+ const handleAddProduct = async (newProduct: Omit<Product, 'id'>): Promise<boolean> => {
+    try {
+      const { name, price, description, imageUrls, category, subcategory, brand, color, size, quantity } = newProduct;
+      await sql`
+        INSERT INTO products (name, price, description, imageUrls, category, subcategory, brand, color, size, quantity)
+        VALUES (${name}, ${price}, ${description}, ${JSON.stringify(imageUrls)}, ${category}, ${subcategory}, ${brand}, ${color}, ${size}, ${quantity})
+      `;
+      // Refetch products to get the new one with its DB-generated ID
+      const { rows } = await sql<Product>`SELECT * FROM products ORDER BY id ASC;`;
+      setProducts(rows);
+      return true;
+    } catch (error) {
+        console.error("Error adding product to database:", error);
+        alert('Hubo un error al agregar el producto.');
+        return false;
     }
-    return success;
   };
   
   const handleUpdateProduct = async (updatedProduct: Product): Promise<boolean> => {
-    const newProductsList = products.map(p => p.id === updatedProduct.id ? updatedProduct : p);
-    const success = await updateProductsOnServer(newProductsList);
-    if (success) {
+     try {
+      const { id, name, price, description, imageUrls, category, subcategory, brand, color, size, quantity } = updatedProduct;
+      await sql`
+        UPDATE products
+        SET name = ${name}, 
+            price = ${price}, 
+            description = ${description}, 
+            imageUrls = ${JSON.stringify(imageUrls)}, 
+            category = ${category}, 
+            subcategory = ${subcategory}, 
+            brand = ${brand}, 
+            color = ${color}, 
+            size = ${size}, 
+            quantity = ${quantity}
+        WHERE id = ${id}
+      `;
+      const newProductsList = products.map(p => p.id === updatedProduct.id ? updatedProduct : p);
       setProducts(newProductsList);
+      return true;
+    } catch (error) {
+        console.error("Error updating product in database:", error);
+        alert('Hubo un error al actualizar el producto.');
+        return false;
     }
-    return success;
   };
 
   const handleDeleteProduct = async (productId: number) => {
-    const newProductsList = products.filter(p => p.id !== productId);
-    const success = await updateProductsOnServer(newProductsList);
-    if (success) {
-      setProducts(newProductsList);
+    try {
+        await sql`DELETE FROM products WHERE id = ${productId}`;
+        const newProductsList = products.filter(p => p.id !== productId);
+        setProducts(newProductsList);
+    } catch (error) {
+        console.error("Error deleting product from database:", error);
+        alert('Hubo un error al eliminar el producto.');
     }
   };
 
