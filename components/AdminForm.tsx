@@ -4,8 +4,8 @@ import { Product, MainCategory } from '../types';
 import { CATEGORIES, SIZES } from '../constants';
 
 interface AdminFormProps {
-  onAddProduct: (product: Omit<Product, 'id'>) => void;
-  onUpdateProduct: (product: Product) => void;
+  onAddProduct: (product: Omit<Product, 'id'>) => Promise<boolean>;
+  onUpdateProduct: (product: Product) => Promise<boolean>;
   editingProduct: Product | null;
   onCancelEdit: () => void;
 }
@@ -33,6 +33,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
       subcategory: CATEGORIES[0].subcategories[0],
   });
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
     if (editingProduct) {
@@ -96,12 +97,13 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
   };
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (imageUrls.length === 0) {
         alert('Por favor, sube al menos una imagen.');
         return;
     }
+    setIsSubmitting(true);
     const productData = {
       ...product,
       price: parseFloat(product.price),
@@ -109,15 +111,22 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
       imageUrls,
     };
 
+    let success = false;
     if (editingProduct) {
-        onUpdateProduct({ ...productData, id: editingProduct.id });
-        alert('¡Producto actualizado con éxito!');
-        onCancelEdit();
+        success = await onUpdateProduct({ ...productData, id: editingProduct.id });
+        if (success) {
+            alert('¡Producto actualizado con éxito!');
+            onCancelEdit();
+            resetForm();
+        }
     } else {
-        onAddProduct(productData);
-        alert('¡Producto agregado con éxito!');
+        success = await onAddProduct(productData);
+        if (success) {
+            alert('¡Producto agregado con éxito!');
+            resetForm();
+        }
     }
-    resetForm();
+    setIsSubmitting(false);
   };
 
   const subcategoriesForSelectedCategory = CATEGORIES.find(c => c.name === product.category)?.subcategories || [];
@@ -129,17 +138,17 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre del Producto</label>
-              <input type="text" id="name" name="name" value={product.name} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink" required />
+              <input type="text" id="name" name="name" value={product.name} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
           </div>
           <div className="space-y-2">
               <label htmlFor="brand" className="block text-sm font-medium text-gray-700">Marca</label>
-              <input type="text" id="brand" name="brand" value={product.brand} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink" required />
+              <input type="text" id="brand" name="brand" value={product.brand} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
           </div>
       </div>
       
       <div className="space-y-2">
         <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descripción</label>
-        <textarea id="description" name="description" value={product.description} onChange={handleInputChange} rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink" required />
+        <textarea id="description" name="description" value={product.description} onChange={handleInputChange} rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
       </div>
 
       <div className="space-y-2">
@@ -147,7 +156,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
             <div className="space-y-1 text-center">
               <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              <div className="flex text-sm text-gray-600"><label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-brand-pink hover:text-brand-pink-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-pink"><span>Sube tus archivos</span><input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageChange} multiple accept="image/*" /></label><p className="pl-1">o arrástralos aquí</p></div>
+              <div className="flex text-sm text-gray-600"><label htmlFor="file-upload" className={`relative bg-white rounded-md font-medium text-brand-pink hover:text-brand-pink-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-pink ${isSubmitting ? 'cursor-not-allowed' : 'cursor-pointer'}`}><span>Sube tus archivos</span><input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageChange} multiple accept="image/*" disabled={isSubmitting} /></label><p className="pl-1">o arrástralos aquí</p></div>
               <p className="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
             </div>
           </div>
@@ -156,7 +165,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
                 {imageUrls.map((url, index) => (
                     <div key={index} className="relative">
                         <img src={url} alt={`Preview ${index}`} className="w-full h-24 object-cover rounded-md"/>
-                        <button type="button" onClick={() => removeImage(index)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs leading-none">&times;</button>
+                        <button type="button" onClick={() => removeImage(index)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs leading-none disabled:bg-red-300" disabled={isSubmitting}>&times;</button>
                     </div>
                 ))}
             </div>
@@ -166,15 +175,15 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-2">
               <label htmlFor="price" className="block text-sm font-medium text-gray-700">Precio</label>
-              <input type="number" id="price" name="price" value={product.price} onChange={handleInputChange} step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink" required />
+              <input type="number" id="price" name="price" value={product.price} onChange={handleInputChange} step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
           </div>
           <div className="space-y-2">
               <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Cantidad en Stock</label>
-              <input type="number" id="quantity" name="quantity" value={product.quantity} onChange={handleInputChange} step="1" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink" required />
+              <input type="number" id="quantity" name="quantity" value={product.quantity} onChange={handleInputChange} step="1" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
           </div>
           <div className="space-y-2">
               <label htmlFor="color" className="block text-sm font-medium text-gray-700">Color</label>
-              <input type="text" id="color" name="color" value={product.color} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink" required />
+              <input type="text" id="color" name="color" value={product.color} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
           </div>
       </div>
 
@@ -182,30 +191,30 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <label htmlFor="category" className="block text-sm font-medium text-gray-700">Categoría</label>
-          <select id="category" name="category" value={product.category} onChange={handleCategoryChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink">
+          <select id="category" name="category" value={product.category} onChange={handleCategoryChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" disabled={isSubmitting}>
             {CATEGORIES.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
           </select>
         </div>
         <div className="space-y-2">
           <label htmlFor="subcategory" className="block text-sm font-medium text-gray-700">Subcategoría</label>
-          <select id="subcategory" name="subcategory" value={product.subcategory} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink" disabled={subcategoriesForSelectedCategory.length === 0}>
+          <select id="subcategory" name="subcategory" value={product.subcategory} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" disabled={subcategoriesForSelectedCategory.length === 0 || isSubmitting}>
             {subcategoriesForSelectedCategory.map(sub => <option key={sub} value={sub}>{sub}</option>)}
           </select>
         </div>
          <div className="space-y-2 md:col-span-2">
           <label htmlFor="size" className="block text-sm font-medium text-gray-700">Talla</label>
-          <select id="size" name="size" value={product.size} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink">
+          <select id="size" name="size" value={product.size} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" disabled={isSubmitting}>
             {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
       </div>
       
       <div className="flex items-center gap-4">
-        <button type="submit" className="flex-grow bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-3 px-4 rounded-md transition-colors duration-300">
-          {editingProduct ? 'Actualizar Producto' : 'Agregar Producto'}
+        <button type="submit" className="flex-grow bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-3 px-4 rounded-md transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled={isSubmitting}>
+          {isSubmitting ? 'Guardando...' : (editingProduct ? 'Actualizar Producto' : 'Agregar Producto')}
         </button>
         {editingProduct && (
-          <button type="button" onClick={() => { onCancelEdit(); resetForm(); }} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-md transition-colors">
+          <button type="button" onClick={() => { onCancelEdit(); resetForm(); }} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-md transition-colors" disabled={isSubmitting}>
             Cancelar
           </button>
         )}
