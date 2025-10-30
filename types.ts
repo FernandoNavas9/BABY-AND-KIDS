@@ -10,7 +10,8 @@ export interface Product {
   name: string;
   price: number;
   description: string;
-  imageUrls: string[]; // Changed from image to imageUrls
+  // Vercel Postgres returns json arrays as strings
+  imageUrls: string[] | string;
   category: MainCategory;
   subcategory: string;
   brand: string;
