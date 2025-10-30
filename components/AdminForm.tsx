@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { Product, MainCategory } from '../types';
 import { CATEGORIES, SIZES } from '../constants';
@@ -213,7 +212,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
           </div>
           <div className="space-y-2">
               <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Cantidad en Stock</label>
-              <input type="number" id="quantity" name="quantity" value={product.quantity} step="1" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
+              <input type="number" id="quantity" name="quantity" value={product.quantity} onChange={handleInputChange} step="1" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
           </div>
           <div className="space-y-2">
               <label htmlFor="color" className="block text-sm font-medium text-gray-700">Color</label>
