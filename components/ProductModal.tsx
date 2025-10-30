@@ -10,10 +10,15 @@ interface ProductModalProps {
 const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
   const [selectedImage, setSelectedImage] = useState('');
   const [isZoomed, setIsZoomed] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   useEffect(() => {
-    if (product && product.imageUrls.length > 0) {
-      setSelectedImage(product.imageUrls[0]);
+    if (product) {
+        const urls = typeof product.imageUrls === 'string' ? JSON.parse(product.imageUrls) : product.imageUrls;
+        setImageUrls(urls);
+      if (urls.length > 0) {
+        setSelectedImage(urls[0]);
+      }
     }
   }, [product]);
 
@@ -36,7 +41,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
                 <img src={selectedImage} alt={product.name} className="w-full h-full object-cover" />
             </div>
             <div className="flex gap-2 justify-center">
-                {product.imageUrls.map((url, index) => (
+                {imageUrls.map((url, index) => (
                     <div 
                         key={index} 
                         className={`w-16 h-16 rounded-md overflow-hidden cursor-pointer border-2 ${selectedImage === url ? 'border-brand-pink' : 'border-transparent'}`}
