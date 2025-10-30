@@ -1,10 +1,18 @@
 import { sql as vercelSql, createPool } from '@vercel/postgres';
 import { MOCK_PRODUCTS } from '../constants';
 
-// In a real app, you'd use env vars. For this setup, we'll let Vercel inject them.
-// FIX: Use DATABASE_URL as this is the new standard from Vercel/Neon.
+// Make the connection logic resilient by checking for the new standard variable first,
+// then falling back to the older one.
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+// Throw a clear error if no connection string is found in the environment.
+// This is the most likely cause of the "missing_connection_string" error.
+if (!connectionString) {
+  throw new Error("Database connection string not found. Please ensure DATABASE_URL or POSTGRES_URL is set in your Vercel project settings.");
+}
+
 const pool = createPool({
-  connectionString: process.env.DATABASE_URL
+  connectionString
 });
 
 export const sql = vercelSql;
