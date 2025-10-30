@@ -1,9 +1,8 @@
 import { Category, Product } from './types';
 
-// Using keyvalue.xyz for a simple, anonymous, writable JSON store.
-// NOTE: This is a public endpoint. Anyone with the URL can read/write data.
-// Data was pre-initialized with MOCK_PRODUCTS.
-export const API_ENDPOINT = 'https://api.keyvalue.xyz/244a03c0/baby_store_products';
+// Using npoint.io for a stable, anonymous, writable JSON store.
+// This new endpoint resolves the previous DNS issues.
+export const API_ENDPOINT = 'https://api.npoint.io/c7283442d3b3c3755422';
 
 export const CATEGORIES: Category[] = [
   { 
@@ -26,13 +25,15 @@ export const SIZES: string[] = [
   '4 Años', '5 Años', 'Chica', 'Mediana', 'Grande'
 ];
 
+// Updated image URLs to use a more reliable placeholder service (placehold.co)
+// and styled them with brand colors for a better visual experience.
 export const MOCK_PRODUCTS: Product[] = [
   {
     id: 1,
     name: 'Body Estampado de Nube',
     price: 15.99,
     description: 'Suave body de algodón con un adorable estampado de nubes. Perfecto para el día a día de tu bebé.',
-    imageUrls: ['https://via.placeholder.com/600x600.png?text=Body+Nube+1'],
+    imageUrls: ['https://placehold.co/600x600/D6E6F2/4C5F7A?text=Body+Nube'],
     category: 'Bebé',
     subcategory: 'Body',
     brand: 'BabyJoy',
@@ -45,7 +46,7 @@ export const MOCK_PRODUCTS: Product[] = [
     name: 'Pijama de Dinosaurio',
     price: 22.50,
     description: 'Pijama de dos piezas con divertido estampado de dinosaurios. Hecho de algodón orgánico.',
-    imageUrls: ['https://via.placeholder.com/600x600.png?text=Pijama+Dino+1'],
+    imageUrls: ['https://placehold.co/600x600/A8D8B9/4C5F7A?text=Pijama+Dino'],
     category: 'Bebé',
     subcategory: 'Pijama',
     brand: 'MiniPaws',
@@ -58,7 +59,7 @@ export const MOCK_PRODUCTS: Product[] = [
     name: 'Vestido Floral de Verano',
     price: 29.99,
     description: 'Precioso vestido de verano con estampado floral. Ligero y cómodo para los días de calor.',
-    imageUrls: ['https://via.placeholder.com/600x600.png?text=Vestido+Floral+1', 'https://via.placeholder.com/600x600.png?text=Vestido+Floral+2'],
+    imageUrls: ['https://placehold.co/600x600/FADADD/4C5F7A?text=Vestido+1', 'https://placehold.co/600x600/F9E49A/4C5F7A?text=Vestido+2'],
     category: 'Niñas',
     subcategory: 'Vestidos',
     brand: 'ChicKids',
@@ -71,7 +72,7 @@ export const MOCK_PRODUCTS: Product[] = [
     name: 'Camiseta de Superhéroe',
     price: 18.00,
     description: 'Camiseta de algodón con el logo de su superhéroe favorito. Ideal para jugar sin parar.',
-    imageUrls: ['https://via.placeholder.com/600x600.png?text=Camiseta+Super+1'],
+    imageUrls: ['https://placehold.co/600x600/4C5F7A/FFFFFF?text=Superh%C3%A9roe'],
     category: 'Niños',
     subcategory: 'Camisetas',
     brand: 'HeroWear',
@@ -84,7 +85,7 @@ export const MOCK_PRODUCTS: Product[] = [
     name: 'Conjunto de Algodón',
     price: 25.00,
     description: 'Cómodo conjunto de dos piezas de algodón para bebé. Incluye pantalón y buzo.',
-    imageUrls: ['https://via.placeholder.com/600x600.png?text=Conjunto+Bebe+1'],
+    imageUrls: ['https://placehold.co/600x600/F3EFE0/4C5F7A?text=Conjunto'],
     category: 'Bebé',
     subcategory: 'Conjuntos',
     brand: 'BabyJoy',
@@ -97,7 +98,7 @@ export const MOCK_PRODUCTS: Product[] = [
     name: 'Falda de Tul Brillante',
     price: 20.00,
     description: 'Falda de tul con brillos para niñas. Perfecta para ocasiones especiales.',
-    imageUrls: ['https://via.placeholder.com/600x600.png?text=Falda+Tul+1'],
+    imageUrls: ['https://placehold.co/600x600/F9E49A/4C5F7A?text=Falda+Tul'],
     category: 'Niñas',
     subcategory: 'Faldas',
     brand: 'ChicKids',
@@ -110,7 +111,7 @@ export const MOCK_PRODUCTS: Product[] = [
     name: 'Pantalón de Jean',
     price: 24.50,
     description: 'Pantalón de jean resistente y moderno para niños. Ideal para el verano.',
-    imageUrls: ['https://via.placeholder.com/600x600.png?text=Bermuda+Jean+1', 'https://via.placeholder.com/600x600.png?text=Bermuda+Jean+2', 'https://via.placeholder.com/600x600.png?text=Bermuda+Jean+3'],
+    imageUrls: ['https://placehold.co/600x600/D6E6F2/4C5F7A?text=Jean+1', 'https://placehold.co/600x600/4C5F7A/FFFFFF?text=Jean+2', 'https://placehold.co/600x600/F3EFE0/4C5F7A?text=Jean+3'],
     category: 'Niños',
     subcategory: 'Pantalones',
     brand: 'UrbanKid',
