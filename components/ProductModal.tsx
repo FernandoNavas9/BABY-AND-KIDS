@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
 
@@ -14,10 +13,12 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
 
   useEffect(() => {
     if (product) {
-        const urls = typeof product.imageUrls === 'string' ? JSON.parse(product.imageUrls) : product.imageUrls;
+        const urls = (typeof product.imageUrls === 'string' ? JSON.parse(product.imageUrls) : product.imageUrls) || [];
         setImageUrls(urls);
       if (urls.length > 0) {
         setSelectedImage(urls[0]);
+      } else {
+        setSelectedImage('https://placehold.co/600x600/D6E6F2/4C5F7A?text=Sin+Imagen');
       }
     }
   }, [product]);
