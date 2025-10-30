@@ -5,36 +5,12 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
 import { Product } from './types';
-import { API_ENDPOINT } from './constants';
+import { API_ENDPOINT, MOCK_PRODUCTS } from './constants';
 
 const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(API_ENDPOINT);
-        if (!response.ok) {
-          // If response is not ok (e.g., 404 Not Found from a new/empty store),
-          // treat it as an empty product list.
-          setProducts([]);
-          return;
-        }
-        const data: Product[] = await response.json();
-        setProducts(data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        setProducts([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
 
   const updateProductsOnServer = async (updatedProducts: Product[]) => {
     try {
@@ -55,6 +31,45 @@ const App: React.FC = () => {
       return false;
     }
   };
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(API_ENDPOINT);
+        
+        if (!response.ok) {
+           // If the endpoint doesn't exist or there's a server error, initialize with mock data.
+          console.warn('Failed to fetch products, initializing with mock data.');
+          setProducts(MOCK_PRODUCTS);
+          await updateProductsOnServer(MOCK_PRODUCTS); // Seed the database
+          return;
+        }
+
+        const data = await response.json();
+        
+        // keyvalue.xyz can return `false` for an empty key. Check if data is a valid array.
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        } else {
+          // If data is not an array or is empty, it's an uninitialized or corrupt store.
+          console.warn('API returned no products or invalid data. Initializing with mock data.');
+          setProducts(MOCK_PRODUCTS);
+          await updateProductsOnServer(MOCK_PRODUCTS); // Seed the database
+        }
+
+      } catch (error) {
+        // Catch JSON parsing errors or other network issues.
+        console.error("Error fetching products, initializing with mock data:", error);
+        setProducts(MOCK_PRODUCTS);
+        await updateProductsOnServer(MOCK_PRODUCTS);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handleAddProduct = async (newProduct: Omit<Product, 'id'>): Promise<boolean> => {
     const newProductsList = [
