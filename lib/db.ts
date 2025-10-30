@@ -2,8 +2,9 @@ import { sql as vercelSql, createPool } from '@vercel/postgres';
 import { MOCK_PRODUCTS } from '../constants';
 
 // In a real app, you'd use env vars. For this setup, we'll let Vercel inject them.
+// FIX: Use DATABASE_URL as this is the new standard from Vercel/Neon.
 const pool = createPool({
-  connectionString: process.env.POSTGRES_URL
+  connectionString: process.env.DATABASE_URL
 });
 
 export const sql = vercelSql;
