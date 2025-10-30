@@ -18,7 +18,10 @@ const App: React.FC = () => {
         setIsLoading(true);
         const response = await fetch(API_ENDPOINT);
         if (!response.ok) {
-          throw new Error('Failed to fetch products');
+          // If response is not ok (e.g., 404 Not Found from a new/empty store),
+          // treat it as an empty product list.
+          setProducts([]);
+          return;
         }
         const data: Product[] = await response.json();
         setProducts(data);
@@ -36,14 +39,14 @@ const App: React.FC = () => {
   const updateProductsOnServer = async (updatedProducts: Product[]) => {
     try {
       const response = await fetch(API_ENDPOINT, {
-        method: 'POST', // npoint.io uses POST to update the bin content
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(updatedProducts),
       });
       if (!response.ok) {
-        throw new Error('Failed to update products');
+        throw new Error(`Failed to update products: ${await response.text()}`);
       }
       return true;
     } catch (error) {
@@ -53,7 +56,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddProduct = async (newProduct: Omit<Product, 'id'>) => {
+  const handleAddProduct = async (newProduct: Omit<Product, 'id'>): Promise<boolean> => {
     const newProductsList = [
       ...products,
       {
@@ -65,14 +68,16 @@ const App: React.FC = () => {
     if (success) {
       setProducts(newProductsList);
     }
+    return success;
   };
   
-  const handleUpdateProduct = async (updatedProduct: Product) => {
+  const handleUpdateProduct = async (updatedProduct: Product): Promise<boolean> => {
     const newProductsList = products.map(p => p.id === updatedProduct.id ? updatedProduct : p);
     const success = await updateProductsOnServer(newProductsList);
     if (success) {
       setProducts(newProductsList);
     }
+    return success;
   };
 
   const handleDeleteProduct = async (productId: number) => {
