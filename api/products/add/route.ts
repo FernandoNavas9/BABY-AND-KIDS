@@ -1,8 +1,7 @@
-import { NextResponse } from 'next/server';
 import { sql } from '../../../lib/db';
 import { Product } from '../../../types';
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
   try {
     const newProduct: Omit<Product, 'id'> = await request.json();
     const { name, price, description, imageUrls, category, subcategory, brand, color, size, quantity } = newProduct;
@@ -12,9 +11,15 @@ export async function POST(request: Request) {
       VALUES (${name}, ${price}, ${description}, ${JSON.stringify(imageUrls)}, ${category}, ${subcategory}, ${brand}, ${color}, ${size}, ${quantity})
     `;
     
-    return NextResponse.json({ message: 'Product added successfully' }, { status: 201 });
+    return new Response(JSON.stringify({ message: 'Product added successfully' }), { 
+      status: 201,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('API Error adding product:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
