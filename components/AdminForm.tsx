@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Product, MainCategory } from '../types';
 import { CATEGORIES, SIZES } from '../constants';
@@ -10,28 +11,13 @@ interface AdminFormProps {
   onCancelEdit: () => void;
 }
 
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
-  });
-};
-
-
 const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, editingProduct, onCancelEdit }) => {
   const [product, setProduct] = useState({
-      name: '',
-      price: '',
-      description: '',
-      brand: '',
-      color: '',
-      size: SIZES[0],
-      quantity: '',
-      category: CATEGORIES[0].name as MainCategory,
+      name: '', price: '', description: '', brand: '', color: '',
+      size: SIZES[0], quantity: '', category: CATEGORIES[0].name as MainCategory,
       subcategory: CATEGORIES[0].subcategories[0],
   });
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -48,7 +34,10 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
         category: editingProduct.category,
         subcategory: editingProduct.subcategory,
       });
-      setImageUrls(editingProduct.imageUrls);
+      // FIX: The imageUrls from the database can be a JSON string.
+      // We need to parse it to an array if it is a string.
+      setImageUrls(typeof editingProduct.imageUrls === 'string' ? JSON.parse(editingProduct.imageUrls) : editingProduct.imageUrls);
+      setImageFiles([]); // Clear file input when editing
     } else {
       resetForm();
     }
@@ -60,6 +49,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
         size: SIZES[0], quantity: '', category: CATEGORIES[0].name,
         subcategory: CATEGORIES[0].subcategories[0],
     });
+    setImageFiles([]);
     setImageUrls([]);
   };
 
@@ -72,43 +62,84 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
     const newCategory = e.target.value as MainCategory;
     const cat = CATEGORIES.find(c => c.name === newCategory);
     setProduct(prev => ({
-        ...prev,
-        category: newCategory,
+        ...prev, category: newCategory,
         subcategory: cat && cat.subcategories.length > 0 ? cat.subcategories[0] : ''
     }));
   };
   
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      const base64Promises = files.map(fileToBase64);
-      try {
-        const base64Urls = await Promise.all(base64Promises);
-        setImageUrls(prev => [...prev, ...base64Urls]);
-      } catch (error) {
-        console.error("Error converting files to base64", error);
-        alert("Hubo un error al cargar las imágenes.");
+      // For new products, replace images. For editing, add to existing ones.
+      if (!editingProduct) {
+          setImageFiles(files);
+          setImageUrls(files.map(file => URL.createObjectURL(file)));
+      } else {
+          const newFiles = [...imageFiles, ...files];
+          setImageFiles(newFiles);
+          const newImageUrls = files.map(file => URL.createObjectURL(file));
+          setImageUrls(prev => [...prev, ...newImageUrls]);
       }
     }
   };
 
-  const removeImage = (index: number) => {
-    setImageUrls(prev => prev.filter((_, i) => i !== index));
+  const removeImage = (index: number, isExistingUrl: boolean) => {
+    if (isExistingUrl) {
+      // Remove from imageUrls that are already stored in the blob
+      setImageUrls(prev => prev.filter((_, i) => i !== index));
+    } else {
+      // Remove from the new files to be uploaded
+      const urlToRemove = imageUrls[index];
+      const fileIndex = imageFiles.findIndex(file => URL.createObjectURL(file) === urlToRemove);
+      
+      if(fileIndex > -1){
+        setImageFiles(prev => prev.filter((_, i) => i !== fileIndex));
+      }
+      setImageUrls(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (imageUrls.length === 0) {
+    if (imageUrls.length === 0 && imageFiles.length === 0) {
         alert('Por favor, sube al menos una imagen.');
         return;
     }
     setIsSubmitting(true);
+    
+    let uploadedImageUrls = editingProduct ? [...imageUrls] : [];
+
+    if (imageFiles.length > 0) {
+        const formData = new FormData();
+        imageFiles.forEach(file => {
+            formData.append('files', file);
+        });
+
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const { urls } = await response.json();
+            if (!response.ok || !urls) {
+                throw new Error('Image upload failed');
+            }
+            // If editing, add new URLs. If new, these are all the URLs.
+            uploadedImageUrls = editingProduct ? [...imageUrls, ...urls] : urls;
+        } catch (error) {
+            console.error(error);
+            alert('Hubo un error al subir las imágenes.');
+            setIsSubmitting(false);
+            return;
+        }
+    }
+    
     const productData = {
       ...product,
       price: parseFloat(product.price),
       quantity: parseInt(product.quantity, 10),
-      imageUrls,
+      imageUrls: uploadedImageUrls,
     };
 
     let success = false;
@@ -130,6 +161,9 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
   };
 
   const subcategoriesForSelectedCategory = CATEGORIES.find(c => c.name === product.category)?.subcategories || [];
+  
+  const currentImageUrls = editingProduct ? editingProduct.imageUrls : [];
+  const newImagePreviewUrls = imageFiles.map(file => URL.createObjectURL(file));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-lg shadow-md max-w-2xl mx-auto">
@@ -160,12 +194,12 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
               <p className="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
             </div>
           </div>
-          {imageUrls.length > 0 && (
+          {(imageUrls.length > 0 || newImagePreviewUrls.length > 0) && (
             <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                 {imageUrls.map((url, index) => (
-                    <div key={index} className="relative">
+                    <div key={url} className="relative">
                         <img src={url} alt={`Preview ${index}`} className="w-full h-24 object-cover rounded-md"/>
-                        <button type="button" onClick={() => removeImage(index)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs leading-none disabled:bg-red-300" disabled={isSubmitting}>&times;</button>
+                        <button type="button" onClick={() => removeImage(index, true)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs leading-none disabled:bg-red-300" disabled={isSubmitting}>&times;</button>
                     </div>
                 ))}
             </div>
@@ -179,7 +213,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
           </div>
           <div className="space-y-2">
               <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Cantidad en Stock</label>
-              <input type="number" id="quantity" name="quantity" value={product.quantity} onChange={handleInputChange} step="1" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
+              <input type="number" id="quantity" name="quantity" value={product.quantity} step="1" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink disabled:bg-gray-100" required disabled={isSubmitting} />
           </div>
           <div className="space-y-2">
               <label htmlFor="color" className="block text-sm font-medium text-gray-700">Color</label>
