@@ -6,8 +6,8 @@ import { Product } from '../types';
 
 interface AdminPageProps {
   products: Product[];
-  onAddProduct: (product: Omit<Product, 'id'>) => void;
-  onUpdateProduct: (product: Product) => void;
+  onAddProduct: (product: Omit<Product, 'id'>) => Promise<boolean>;
+  onUpdateProduct: (product: Product) => Promise<boolean>;
   onDeleteProduct: (productId: number) => void;
 }
 
@@ -44,10 +44,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ products, onAddProduct, onUpdateP
             <h2 className="text-2xl font-bold text-brand-blue mb-6">Gestionar Productos</h2>
             <div className="bg-white p-4 rounded-lg shadow-md">
                 <div className="space-y-4">
-                    {products.length > 0 ? products.map(product => (
+                    {products.length > 0 ? products.map(product => {
+                        const imageUrlsArray = typeof product.imageUrls === 'string' ? JSON.parse(product.imageUrls) : product.imageUrls;
+                        return (
                         <div key={product.id} className="flex items-center justify-between p-2 border-b last:border-b-0">
                             <div className="flex items-center gap-4">
-                                <img src={product.imageUrls[0]} alt={product.name} className="w-16 h-16 object-cover rounded-md"/>
+                                <img src={imageUrlsArray[0]} alt={product.name} className="w-16 h-16 object-cover rounded-md"/>
                                 <div>
                                     <p className="font-semibold text-brand-blue">{product.name}</p>
                                     <p className="text-sm text-gray-500">{product.brand} - En Stock: {product.quantity}</p>
@@ -67,7 +69,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ products, onAddProduct, onUpdateP
                                 </button>
                             </div>
                         </div>
-                    )) : (
+                    )}) : (
                         <p className="text-center text-gray-500 py-4">No hay productos para mostrar.</p>
                     )}
                 </div>
