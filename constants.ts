@@ -1,9 +1,5 @@
 import { Category, Product } from './types';
 
-// Using npoint.io for a stable, anonymous, writable JSON store.
-// This new endpoint resolves the previous DNS issues.
-export const API_ENDPOINT = 'https://api.npoint.io/c7283442d3b3c3755422';
-
 export const CATEGORIES: Category[] = [
   { 
     name: 'Bebé', 
