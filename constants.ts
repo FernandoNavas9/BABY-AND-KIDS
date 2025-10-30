@@ -1,5 +1,7 @@
 import { Category, Product } from './types';
 
+export const API_ENDPOINT = 'https://api.npoint.io/a59a117373f76023537b';
+
 export const CATEGORIES: Category[] = [
   { 
     name: 'Bebé', 
