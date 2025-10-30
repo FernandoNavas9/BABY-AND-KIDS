@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminForm from '../components/AdminForm';
@@ -45,11 +44,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ products, onAddProduct, onUpdateP
             <div className="bg-white p-4 rounded-lg shadow-md">
                 <div className="space-y-4">
                     {products.length > 0 ? products.map(product => {
-                        const imageUrlsArray = typeof product.imageUrls === 'string' ? JSON.parse(product.imageUrls) : product.imageUrls;
+                        const imageUrlsArray = (typeof product.imageUrls === 'string' ? JSON.parse(product.imageUrls) : product.imageUrls) || [];
+                        const displayImage = imageUrlsArray.length > 0 ? imageUrlsArray[0] : 'https://placehold.co/600x600/D6E6F2/4C5F7A?text=Sin+Imagen';
                         return (
                         <div key={product.id} className="flex items-center justify-between p-2 border-b last:border-b-0">
                             <div className="flex items-center gap-4">
-                                <img src={imageUrlsArray[0]} alt={product.name} className="w-16 h-16 object-cover rounded-md"/>
+                                <img src={displayImage} alt={product.name} className="w-16 h-16 object-cover rounded-md"/>
                                 <div>
                                     <p className="font-semibold text-brand-blue">{product.name}</p>
                                     <p className="text-sm text-gray-500">{product.brand} - En Stock: {product.quantity}</p>
