@@ -1,12 +1,14 @@
 import { put } from '@vercel/blob';
-import { NextResponse } from 'next/server';
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: Request): Promise<Response> {
   const form = await request.formData();
   const files = form.getAll('files') as File[];
 
   if (!files.length) {
-    return NextResponse.json({ error: 'No files to upload.' }, { status: 400 });
+    return new Response(JSON.stringify({ error: 'No files to upload.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
   
   try {
@@ -17,9 +19,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     const blobs = await Promise.all(blobPromises);
     const urls = blobs.map(blob => blob.url);
 
-    return NextResponse.json({ urls });
+    return new Response(JSON.stringify({ urls }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Error uploading files:', error);
-    return NextResponse.json({ error: 'Failed to upload files.' }, { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to upload files.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
