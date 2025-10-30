@@ -11,8 +11,7 @@
     ],
     "skipLibCheck": true,
     "types": [
-      "node",
-      "next/server"
+      "node"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
