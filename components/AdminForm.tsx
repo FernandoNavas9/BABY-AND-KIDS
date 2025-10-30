@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Product, MainCategory } from '../types';
 import { CATEGORIES, SIZES } from '../constants';
@@ -101,10 +100,6 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (imageUrls.length === 0 && imageFiles.length === 0) {
-        alert('Por favor, sube al menos una imagen.');
-        return;
-    }
     setIsSubmitting(true);
     
     let uploadedImageUrls = editingProduct ? [...imageUrls] : [];
@@ -185,7 +180,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ onAddProduct, onUpdateProduct, ed
       </div>
 
       <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Imágenes del Producto</label>
+          <label className="block text-sm font-medium text-gray-700">Imágenes del Producto (Opcional)</label>
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
             <div className="space-y-1 text-center">
               <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
