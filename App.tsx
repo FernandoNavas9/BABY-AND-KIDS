@@ -33,7 +33,7 @@ const App: React.FC = () => {
 
  const handleAddProduct = async (newProduct: Omit<Product, 'id'>): Promise<boolean> => {
     try {
-      const response = await fetch('/api/products/add', {
+      const response = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newProduct),
@@ -50,8 +50,8 @@ const App: React.FC = () => {
   
   const handleUpdateProduct = async (updatedProduct: Product): Promise<boolean> => {
      try {
-       const response = await fetch('/api/products/update', {
-        method: 'POST', // Using POST for simplicity in serverless functions
+       const response = await fetch('/api/products', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedProduct),
       });
@@ -67,8 +67,8 @@ const App: React.FC = () => {
 
   const handleDeleteProduct = async (productId: number) => {
     try {
-       const response = await fetch('/api/products/delete', {
-        method: 'POST', // Using POST for simplicity
+       const response = await fetch('/api/products', {
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: productId }),
       });
